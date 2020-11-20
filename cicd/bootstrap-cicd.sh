@@ -11,7 +11,7 @@ function usage() {
     echo " $0 --help"
     echo
     echo "Example:"
-    echo " $0 deploy --project-suffix mydemo --app-name appname --repo-url repourl --repo-reference master --context-dir mydir"
+    echo " $0 deploy --project-suffix mydemo --app-name appname --repo-url repourl --repo-reference master mydir"
 
     echo " $0 delete --project-suffix mydemo --app-name myapp"
     echo
@@ -36,7 +36,6 @@ ARG_PROJECT_SUFFIX=
 ARG_REPO_URL=
 ARG_REPO_REF=
 ARG_APP_NAME=
-ARG_CONTEXT_DIR=
 NUM_ARGS=$#
 
 echo "The number of shell arguments is $NUM_ARGS"
@@ -103,13 +102,6 @@ while :; do
                 exit 255
             fi
             ;;
-            --context-dir)
-               if [ -n "$2" ]; then
-                   ARG_CONTEXT_DIR=$2
-                   shift
-
-               fi
-               ;;
 
         -h|--help)
             usage
@@ -139,8 +131,6 @@ CICD_PROJECT=avaya-cicd
 APP_NAME=$ARG_APP_NAME
 REPO_URL=$ARG_REPO_URL
 REPO_REF=$ARG_REPO_REF
-CONTEXT_DIR=$ARG_CONTEXT_DIR
-
 template="avaya-cicd-template.yaml"
 
 
@@ -160,6 +150,8 @@ function setup_projects() {
   oc adm policy add-role-to-group edit system:serviceaccounts:$CICD_PROJECT -n $DEV_PROJECT
   oc adm policy add-role-to-group edit system:serviceaccounts:$CICD_PROJECT -n $STAGE_PROJECT
   oc adm policy add-role-to-group edit system:serviceaccounts:$STAGE_PROJECT -n $DEV_PROJECT
+  oc adm policy add-scc-to-user anyuid -z default -n $DEV_PROJECT
+  oc adm policy add-scc-to-user anyuid -z default -n $STAGE_PROJECT
 
   echo_header "processing template"
 
@@ -180,7 +172,7 @@ function setup_applications() {
   # This would use template once template is finished
   ########################################################
   echo_header "Setting up application resources in $DEV_PROJECT"
-  oc new-app --as-deployment-config --strategy docker --name $APP_NAME $REPO_URL --context-dir $CONTEXT_DIR -n $DEV_PROJECT 
+  oc new-app --as-deployment-config --strategy docker --name $APP_NAME $REPO_URL  -n $DEV_PROJECT 
   
   sleep 5
 

@@ -30,7 +30,7 @@ parameters:
   required: true  
 - displayName: Repository reference
   name: REPO_REF
-  value: master
+  value: main 
 - description: Webhook secret
   from: '[a-zA-Z0-9]{8}'
   generate: expression
