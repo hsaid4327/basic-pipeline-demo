@@ -25,9 +25,6 @@ parameters:
 - displayName: Repository url
   name: REPO_URL
   required: true
-- displayName: context directory
-  name: CONTEXT_DIR
-  required: true  
 - displayName: Repository reference
   name: REPO_REF
   value: main 
@@ -60,7 +57,6 @@ objects:
           secret: ${WEBHOOK_SECRET}
     runPolicy: Serial
     source:
-      contextDir: ${CONTEXT_DIR}
       type: "Git"
       git:
         uri: ${REPO_URL}
