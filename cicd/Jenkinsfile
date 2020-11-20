@@ -46,6 +46,7 @@ pipeline {
             }
           }
     }
+  }
     stage('Deploy STAGE') {
         steps {
           echo "Deploying to ${env.STAGE_PROJECT}"
@@ -57,8 +58,6 @@ pipeline {
               }
             }
           }
-
-
 
       }
 
