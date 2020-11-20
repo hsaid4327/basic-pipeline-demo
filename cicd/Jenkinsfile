@@ -5,26 +5,62 @@ pipeline {
     stage('Build Image') {
       steps {
         echo "************ Building an application image ************"
+        script {
+          openshift.withCluster() {
+            openshift.withProject(env.DEV_PROJECT) {
+              sh "oc set triggers dc/$APP_NAME --manual -n $DEV_PROJECT"
+              openshift.selector("bc", env.APP_NAME).startBuild("--wait=true")
+            }
+          }
+        }
       }
-
     }
     stage('Deploy to env.DEV_PROJECT') {
       steps {
-        echo "Deploying to ${env.DEV_PROJECT}"
+        script {
+          openshift.withCluster() {
+            openshift.withProject(env.DEV_PROJECT) {
+              openshift.selector("dc", env.APP_NAME).rollout().latest();
+            }
+          }
+        }
       }
     }
-    stage('Promote to STAGE?') {
+
+
+
+  stage('Promote to STAGE?') {
 
         steps {
           timeout(time:15, unit:'MINUTES') {
               input message: "Promote to STAGE?", ok: "Promote"
             }
-         }
+         
+
+         script {
+            openshift.withCluster() {
+              openshift.withProject(env.STAGE_PROJECT) {
+               sh "oc set triggers dc/$APP_NAME --manual -n $STAGE_PROJECT"
+               openshift.tag("$DEV_PROJECT/$APP_NAME:latest", "$STAGE_PROJECT/$APP_NAME:stage")
+              }
+            }
+          }
     }
     stage('Deploy STAGE') {
         steps {
           echo "Deploying to ${env.STAGE_PROJECT}"
-         }
+
+          script {
+            openshift.withCluster() {
+              openshift.withProject(env.STAGE_PROJECT) {
+                openshift.selector("dc", env.APP_NAME).rollout().latest();
+              }
+            }
+          }
+
+
+
+      }
 
     }
   }

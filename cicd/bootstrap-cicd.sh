@@ -155,7 +155,7 @@ function setup_projects() {
 
   echo_header "processing template"
 
-  oc process -f $template -p DEV_PROJECT=$DEV_PROJECT -p STAGE_PROJECT=$STAGE_PROJECT -p CICD_PROJECT=$CICD_PROJECT -p APP_NAME=$APP_NAME  -p REPO_URL=$REPO_URL -p REPO_REF=$REPO_REF -p CONTEXT_DIR=$CONTEXT_DIR | oc create -f - -n $CICD_PROJECT
+  oc process -f $template -p DEV_PROJECT=$DEV_PROJECT -p STAGE_PROJECT=$STAGE_PROJECT -p CICD_PROJECT=$CICD_PROJECT -p APP_NAME=$APP_NAME  -p REPO_URL=$REPO_URL -p REPO_REF=$REPO_REF | oc create -f - -n $CICD_PROJECT
 }
 
 function setup_applications() {
