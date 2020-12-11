@@ -1,24 +1,25 @@
 apiVersion: v1
 kind: Template
 labels:
-  template: cicd
-  group: cicd
+  app: ${APP_NAME}-cd
+  
 metadata:
   annotations:
     iconClass: icon-jenkins
     tags: instant-app,jenkins,gogs,nexus,cicd
-  name: cicd
+  name: avaya-cd
 message: "Use the following credentials for login:\nJenkins: use your OpenShift credentials"
 parameters:
-- displayName: DEV project name
-  name: DEV_PROJECT
+- displayName: Source project name
+  name: SOURCE_PROJECT
   required: true
-- displayName: STAGE project name
-  name: STAGE_PROJECT
+- displayName: Destination project name
+  name: DEST_PROJECT
   required: true
 - displayName: CICD project name
   name: CICD_PROJECT
   required: true
+  value: avaya-cicd
 - displayName: Applicaton name
   name: APP_NAME
   required: true
@@ -36,57 +37,18 @@ parameters:
 - displayName: Image name
   name: IMAGE_NAME
   required: true
-- displayName: image tag
-  name: IMAGE_TAG
+- displayName: source image tag
+  name: SOURCE_IMAGE_TAG
   value: stage
+  required: true  
+- displayName: destination image tag
+  name: DEST_IMAGE_TAG
   required: true  
 objects:
 
 # Pipeline
 
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: RoleBinding
-  metadata:
-    name: edit
-    namespace: ${DEV_PROJECT}
-  roleRef:
-    apiGroup: rbac.authorization.k8s.io
-    kind: ClusterRole
-    name: edit
-  subjects:
-  - apiGroup: rbac.authorization.k8s.io
-    kind: Group
-    name: system:serviceaccounts:${CICD_PROJECT}
 
-
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: RoleBinding
-  metadata:
-    name: edit
-    namespace: ${STAGE_PROJECT}
-  roleRef:
-    apiGroup: rbac.authorization.k8s.io
-    kind: ClusterRole
-    name: edit
-  subjects:
-  - apiGroup: rbac.authorization.k8s.io
-    kind: Group
-    name: system:serviceaccounts:${CICD_PROJECT}
-
-
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: RoleBinding
-  metadata:
-    name: edit-stage
-    namespace: ${DEV_PROJECT}
-  roleRef:
-    apiGroup: rbac.authorization.k8s.io
-    kind: ClusterRole
-    name: edit
-  subjects:
-  - apiGroup: rbac.authorization.k8s.io
-    kind: Group
-    name: system:serviceaccounts:${STAGE_PROJECT}
 
 
 
@@ -96,9 +58,9 @@ objects:
     annotations:
       pipeline.alpha.openshift.io/uses: '[{"name": "jenkins", "namespace": "", "kind": "DeploymentConfig"}]'
     labels:
-      app: ${APP_NAME}-pipeline
-      name: ${APP_NAME}-pipeline
-    name: ${APP_NAME}-pipeline
+      app: ${APP_NAME}-deployment-pipeline
+      name: ${APP_NAME}-deployment-pipeline
+    name: ${APP_NAME}-deployment-pipeline
     namespace: ${CICD_PROJECT}
   spec:
     triggers:
@@ -117,16 +79,17 @@ objects:
     strategy:
       jenkinsPipelineStrategy:
         env:
-        - name: DEV_PROJECT
+        - name: SOURCE_PROJECT
           value: ${DEV_PROJECT}
-        - name: STAGE_PROJECT
+        - name: DEST_PROJECT
           value: ${STAGE_PROJECT}
         - name: APP_NAME
           value: ${APP_NAME}
         - name: IMAGE_NAME
           value: ${IMAGE_NAME}
-        - name: IMAGE_TAG
-          value: ${IMAGE_TAG}
-
+        - name: SOURCE_IMAGE_TAG
+          value: ${SOURCE_IMAGE_TAG}
+        - name: DEST_IMAGE_TAG
+          value: ${DEST_IMAGE_TAG}
         jenkinsfilePath: cicd/Jenkinsfile
       type: JenkinsPipeline

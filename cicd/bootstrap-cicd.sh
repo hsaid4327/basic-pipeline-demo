@@ -36,6 +36,8 @@ ARG_PROJECT_SUFFIX=
 ARG_REPO_URL=
 ARG_REPO_REF=
 ARG_APP_NAME=
+ARG_IMAGE_NAME=
+ARG_IMAGE_TAG=
 NUM_ARGS=$#
 
 echo "The number of shell arguments is $NUM_ARGS"
@@ -103,6 +105,28 @@ while :; do
             fi
             ;;
 
+        --image-name)
+            if [ -n "$2" ]; then
+                IMAGE_NAME=$2
+                shift
+            else
+                printf 'ERROR: "--image-name" requires a non-empty value.\n' >&2
+                usage
+                exit 255
+            fi
+            ;;
+
+       --image-tag)
+            if [ -n "$2" ]; then
+                IMAGE_TAG=$2
+                shift
+            else
+                printf 'ERROR: "--image-tag" requires a non-empty value.\n' >&2
+                usage
+                exit 255
+            fi
+            ;;
+
         -h|--help)
             usage
             exit 0
@@ -132,6 +156,8 @@ APP_NAME=$ARG_APP_NAME
 REPO_URL=$ARG_REPO_URL
 REPO_REF=$ARG_REPO_REF
 template="avaya-cicd-template.yaml"
+app_template="template-clean.yaml"
+app_deploy_template="template-clean-deploy-only.yaml"
 
 
 function setup_projects() {
@@ -147,9 +173,9 @@ function setup_projects() {
 
   sleep 2
 
-  oc adm policy add-role-to-group edit system:serviceaccounts:$CICD_PROJECT -n $DEV_PROJECT
-  oc adm policy add-role-to-group edit system:serviceaccounts:$CICD_PROJECT -n $STAGE_PROJECT
-  oc adm policy add-role-to-group edit system:serviceaccounts:$STAGE_PROJECT -n $DEV_PROJECT
+  #oc adm policy add-role-to-group edit system:serviceaccounts:$CICD_PROJECT -n $DEV_PROJECT
+  #oc adm policy add-role-to-group edit system:serviceaccounts:$CICD_PROJECT -n $STAGE_PROJECT
+  #oc adm policy add-role-to-group edit system:serviceaccounts:$STAGE_PROJECT -n $DEV_PROJECT
   oc adm policy add-scc-to-user anyuid -z default -n $DEV_PROJECT
   oc adm policy add-scc-to-user anyuid -z default -n $STAGE_PROJECT
 
@@ -172,7 +198,8 @@ function setup_applications() {
   # This would use template once template is finished
   ########################################################
   echo_header "Setting up application resources in $DEV_PROJECT"
-  oc new-app --as-deployment-config --strategy docker --name $APP_NAME $REPO_URL  -n $DEV_PROJECT 
+  #oc new-app --as-deployment-config --strategy docker --name $APP_NAME $REPO_URL  -n $DEV_PROJECT
+  oc process -f $app_template -p APP_NAME=$APP_NAME -p IMAGE_NAME=$IMAGE_NAME -p IMAGE_TAG=$IMAGE_TAG | oc create -f - 
   
   sleep 5
 
